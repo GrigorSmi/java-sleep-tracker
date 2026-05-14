@@ -18,8 +18,8 @@ class SleepTrackerAppTest {
     private ArrayList<OneSleepSession> sessions;
 
     private static OneSleepSession makeSession(int startDay, int startHour, int startMinute,
-                                                int endDay, int endHour, int endMinute,
-                                                String quality) {
+                                               int endDay, int endHour, int endMinute,
+                                               String quality) {
         return new OneSleepSession(
                 LocalDateTime.of(2025, 10, startDay, startHour, startMinute)
                         .atZone(ZoneId.systemDefault()).toInstant(),
