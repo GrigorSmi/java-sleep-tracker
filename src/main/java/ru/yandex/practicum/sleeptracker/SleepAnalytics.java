@@ -3,50 +3,52 @@ package ru.yandex.practicum.sleeptracker;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SleepAnalytics {
 
     // Находит минимальную продолжительность сессии сна в минутах
     public SleepAnalysisResult minDuration(ArrayList<OneSleepSession> sessions) {
-        long min = sessions.stream()
-                .mapToLong(s -> Duration.between(s.getStartSleep(), s.getFinishSleep()).toMinutes())
+        int min = sessions.stream()
+                .mapToInt(s -> (int) Duration.between(s.getStartSleep(), s.getFinishSleep()).toMinutes())
                 .min()
                 .orElseThrow(() -> new IllegalArgumentException("Список сессий пуст"));
-        return new SleepAnalysisResult("Минимальная продолжительность сессии сна (мин)", min);
+        return new SleepAnalysisResult(SleepAnalysisResult.MIN_DURATION, min);
     }
 
     // Находит максимальную продолжительность сессии сна в минутах
     public SleepAnalysisResult maxDuration(ArrayList<OneSleepSession> sessions) {
-        long max = sessions.stream()
-                .mapToLong(s -> Duration.between(s.getStartSleep(), s.getFinishSleep()).toMinutes())
+        int max = sessions.stream()
+                .mapToInt(s -> (int) Duration.between(s.getStartSleep(), s.getFinishSleep()).toMinutes())
                 .max()
                 .orElseThrow(() -> new IllegalArgumentException("Список сессий пуст"));
-        return new SleepAnalysisResult("Максимальная продолжительность сессии сна (мин)", max);
+        return new SleepAnalysisResult(SleepAnalysisResult.MAX_DURATION, max);
     }
 
     // Вычисляет среднюю продолжительность сессии сна в минутах
     public SleepAnalysisResult avgDuration(ArrayList<OneSleepSession> sessions) {
         double avg = sessions.stream()
-                .mapToLong(s -> Duration.between(s.getStartSleep(), s.getFinishSleep()).toMinutes())
+                .mapToDouble(s -> (double) Duration.between(s.getStartSleep(), s.getFinishSleep()).toMinutes())
                 .average()
                 .orElseThrow(() -> new IllegalArgumentException("Список сессий пуст"));
-        return new SleepAnalysisResult("Средняя продолжительность сессии сна (мин)", avg);
+        return new SleepAnalysisResult(SleepAnalysisResult.AVG_DURATION, avg);
     }
 
-    // Подсчитывает количество сессий с плохим качеством сна (BAD)
+    // Подсчитывает количество сессий с плохим качеством сна
     public SleepAnalysisResult countBadQuality(ArrayList<OneSleepSession> sessions) {
-        long count = sessions.stream()
+        int count = (int) sessions.stream()
                 .filter(s -> "BAD".equals(s.getQuality()))
                 .count();
-        return new SleepAnalysisResult("Количество сессий с плохим качеством сна", count);
+        return new SleepAnalysisResult(SleepAnalysisResult.BAD_QUALITY, count);
     }
 
     // Подсчитывает количество бессонных ночей.
-    // Бессонной считается ночь (00:00-06:00) конкретной даты,
-    // которую не пересекает ни одна сессия сна.
     public SleepAnalysisResult countSleeplessNights(ArrayList<OneSleepSession> sessions) {
         ZoneId zone = ZoneId.systemDefault();
 
@@ -60,17 +62,62 @@ public class SleepAnalytics {
                 .max(Comparator.naturalOrder())
                 .orElseThrow(() -> new IllegalArgumentException("Список сессий пуст"));
 
-        long sleeplessNights = minDate.datesUntil(maxDate.plusDays(1))
-                .filter(date -> {
-                    Instant nightStart = date.atStartOfDay(zone).toInstant();
-                    Instant nightEnd = date.atTime(6, 0).atZone(zone).toInstant();
-                    return sessions.stream().noneMatch(s ->
-                            s.getStartSleep().isBefore(nightEnd) &&
-                            s.getFinishSleep().isAfter(nightStart)
-                    );
-                })
+        int sleeplessNights = (int) minDate.datesUntil(maxDate.plusDays(1))
+                .filter(date -> sessions.stream().noneMatch(s ->
+                        s.getFinishSleep().atZone(zone).toLocalDate().equals(date) && isNightSession(s, zone)
+                ))
                 .count();
 
-        return new SleepAnalysisResult("Количество бессонных ночей", sleeplessNights);
+        return new SleepAnalysisResult(SleepAnalysisResult.SLEEPLESS_NIGHTS, sleeplessNights);
+    }
+
+    // Проверяет, является ли сессия ночной (00:00-06:00) для хронотипа и кол-ва бессоных
+    private boolean isNightSession(OneSleepSession session, ZoneId zone) {
+        LocalDate endDate = session.getFinishSleep().atZone(zone).toLocalDate();
+        Instant nightStart = endDate.atStartOfDay(zone).toInstant();
+        Instant nightEnd = endDate.atTime(6, 0).atZone(zone).toInstant();
+        return session.getStartSleep().isBefore(nightEnd) &&
+                session.getFinishSleep().isAfter(nightStart);
+    }
+
+    // Определяет хронотип одной ночной сессии
+    private String classifyChronotype(OneSleepSession session, ZoneId zone) {
+        LocalTime startTime = session.getStartSleep().atZone(zone).toLocalTime();
+        LocalTime endTime = session.getFinishSleep().atZone(zone).toLocalTime();
+
+        boolean isOwl = startTime.isAfter(LocalTime.of(23, 0)) &&
+                endTime.isAfter(LocalTime.of(9, 0));
+        boolean isLark = startTime.isBefore(LocalTime.of(22, 0)) &&
+                endTime.isBefore(LocalTime.of(7, 0));
+
+        if (isOwl) return "Сова";
+        if (isLark) return "Жаворонок";
+        return "Голубь";
+    }
+
+    // Определяет хронотип пользователя всех сессий
+    public SleepAnalysisResult determineChronotype(ArrayList<OneSleepSession> sessions) {
+        ZoneId zone = ZoneId.systemDefault();
+
+        Map<String, Integer> counts = sessions.stream()
+                .filter(s -> isNightSession(s, zone))
+                .map(s -> classifyChronotype(s, zone))
+                .collect(Collectors.groupingBy(s -> s, Collectors.summingInt(s -> 1)));
+
+        if (counts.isEmpty()) {
+            return new SleepAnalysisResult(SleepAnalysisResult.CHRONOTYPE, SleepAnalysisResult.NO_DATA);
+        }
+
+        int maxCount = counts.values().stream()
+                .max(Comparator.naturalOrder())
+                .orElse(0);
+
+        List<String> topTypes = counts.entrySet().stream()
+                .filter(e -> e.getValue() == maxCount)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        String chronotype = topTypes.size() > 1 ? "Голубь" : topTypes.get(0);
+        return new SleepAnalysisResult(SleepAnalysisResult.CHRONOTYPE, chronotype);
     }
 }

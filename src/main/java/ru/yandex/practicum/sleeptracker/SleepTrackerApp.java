@@ -18,7 +18,8 @@ public class SleepTrackerApp {
             analytics::maxDuration,
             analytics::avgDuration,
             analytics::countBadQuality,
-            analytics::countSleeplessNights
+            analytics::countSleeplessNights,
+            analytics::determineChronotype
     );
 
     public static void main(String[] args) {

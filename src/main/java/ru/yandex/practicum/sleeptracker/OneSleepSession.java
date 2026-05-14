@@ -6,9 +6,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class OneSleepSession {
-    private Instant startSleep;
-    private Instant finishSleep;
-    private String quality;
+    private final Instant startSleep;
+    private final Instant finishSleep;
+    private final String quality;
 
      public OneSleepSession(Instant startSleep, Instant finishSleep, String quality) {
         this.startSleep = startSleep;
