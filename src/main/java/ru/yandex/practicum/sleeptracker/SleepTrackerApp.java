@@ -1,5 +1,13 @@
 package ru.yandex.practicum.sleeptracker;
 
+import ru.yandex.practicum.sleeptracker.function.AverageDurationFunction;
+import ru.yandex.practicum.sleeptracker.function.BadQualityFunction;
+import ru.yandex.practicum.sleeptracker.function.ChronotypeFunction;
+import ru.yandex.practicum.sleeptracker.function.MaxDurationFunction;
+import ru.yandex.practicum.sleeptracker.function.MinDurationFunction;
+import ru.yandex.practicum.sleeptracker.function.SleeplessNightsFunction;
+import ru.yandex.practicum.sleeptracker.function.TotalSessionsFunction;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -11,16 +19,14 @@ import java.util.stream.Collectors;
 
 public class SleepTrackerApp {
 
-    private final SleepAnalytics analytics = new SleepAnalytics();
-
     private final List<Function<ArrayList<OneSleepSession>, SleepAnalysisResult>> functions = List.of(
-            analytics::countAllSessions,
-            analytics::minDuration,
-            analytics::maxDuration,
-            analytics::avgDuration,
-            analytics::countBadQuality,
-            analytics::countSleeplessNights,
-            analytics::determineChronotype
+            new TotalSessionsFunction(),
+            new MinDurationFunction(),
+            new MaxDurationFunction(),
+            new AverageDurationFunction(),
+            new BadQualityFunction(),
+            new SleeplessNightsFunction(),
+            new ChronotypeFunction()
     );
 
     public static void main(String[] args) {

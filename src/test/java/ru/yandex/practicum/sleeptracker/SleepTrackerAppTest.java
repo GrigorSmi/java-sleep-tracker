@@ -1,5 +1,13 @@
 package ru.yandex.practicum.sleeptracker;
 
+import ru.yandex.practicum.sleeptracker.function.AverageDurationFunction;
+import ru.yandex.practicum.sleeptracker.function.BadQualityFunction;
+import ru.yandex.practicum.sleeptracker.function.ChronotypeFunction;
+import ru.yandex.practicum.sleeptracker.function.MaxDurationFunction;
+import ru.yandex.practicum.sleeptracker.function.MinDurationFunction;
+import ru.yandex.practicum.sleeptracker.function.SleeplessNightsFunction;
+import ru.yandex.practicum.sleeptracker.function.TotalSessionsFunction;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,12 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SleepTrackerAppTest {
 
-    private SleepAnalytics analytics;
     private ArrayList<OneSleepSession> sessions;
 
     private static OneSleepSession makeSession(int startDay, int startHour, int startMinute,
@@ -31,7 +37,6 @@ class SleepTrackerAppTest {
 
     @BeforeEach
     void setUp() {
-        analytics = new SleepAnalytics();
         sessions = new ArrayList<>();
     }
 
@@ -40,7 +45,7 @@ class SleepTrackerAppTest {
     void minDuration_singleSession_returnsItsDuration() {
         sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
 
-        SleepAnalysisResult result = analytics.minDuration(sessions);
+        SleepAnalysisResult result = new MinDurationFunction().apply(sessions);
 
         assertEquals(SleepAnalysisResult.MIN_DURATION, result.getDescription());
         assertEquals(480, result.getResult());
@@ -53,7 +58,7 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(3, 14, 0, 3, 15, 0, "NORMAL"));   // 60 min
         sessions.add(makeSession(5, 0, 0, 5, 6, 0, "GOOD"));       // 360 min
 
-        SleepAnalysisResult result = analytics.minDuration(sessions);
+        SleepAnalysisResult result = new MinDurationFunction().apply(sessions);
 
         assertEquals(60, result.getResult());
     }
@@ -63,7 +68,7 @@ class SleepTrackerAppTest {
     void maxDuration_singleSession_returnsItsDuration() {
         sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
 
-        SleepAnalysisResult result = analytics.maxDuration(sessions);
+        SleepAnalysisResult result = new MaxDurationFunction().apply(sessions);
 
         assertEquals(SleepAnalysisResult.MAX_DURATION, result.getDescription());
         assertEquals(480, result.getResult());
@@ -76,7 +81,7 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(3, 14, 0, 3, 15, 0, "NORMAL"));   // 60 min
         sessions.add(makeSession(5, 0, 0, 5, 6, 0, "GOOD"));       // 360 min
 
-        SleepAnalysisResult result = analytics.maxDuration(sessions);
+        SleepAnalysisResult result = new MaxDurationFunction().apply(sessions);
 
         assertEquals(480, result.getResult());
     }
@@ -86,7 +91,7 @@ class SleepTrackerAppTest {
     void avgDuration_singleSession_returnsItsDurationAsDouble() {
         sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
 
-        SleepAnalysisResult result = analytics.avgDuration(sessions);
+        SleepAnalysisResult result = new AverageDurationFunction().apply(sessions);
 
         assertEquals(SleepAnalysisResult.AVG_DURATION, result.getDescription());
         assertEquals(480.0, (Double) result.getResult(), 1e-9);
@@ -98,7 +103,7 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));     // 480 min
         sessions.add(makeSession(3, 14, 0, 3, 15, 0, "NORMAL"));   // 60 min
 
-        SleepAnalysisResult result = analytics.avgDuration(sessions);
+        SleepAnalysisResult result = new AverageDurationFunction().apply(sessions);
 
         assertEquals(270.0, (Double) result.getResult(), 1e-9);
     }
@@ -108,7 +113,7 @@ class SleepTrackerAppTest {
     void countAllSessions_singleSession_returnsOne() {
         sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
 
-        SleepAnalysisResult result = analytics.countAllSessions(sessions);
+        SleepAnalysisResult result = new TotalSessionsFunction().apply(sessions);
 
         assertEquals(SleepAnalysisResult.ALL_SESSIONS, result.getDescription());
         assertEquals(1, result.getResult());
@@ -121,7 +126,7 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(3, 14, 0, 3, 15, 0, "NORMAL"));
         sessions.add(makeSession(5, 0, 0, 5, 6, 0, "GOOD"));
 
-        SleepAnalysisResult result = analytics.countAllSessions(sessions);
+        SleepAnalysisResult result = new TotalSessionsFunction().apply(sessions);
 
         assertEquals(3, result.getResult());
     }
@@ -132,7 +137,7 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
         sessions.add(makeSession(3, 14, 0, 3, 15, 0, "NORMAL"));
 
-        SleepAnalysisResult result = analytics.countBadQuality(sessions);
+        SleepAnalysisResult result = new BadQualityFunction().apply(sessions);
 
         assertEquals(SleepAnalysisResult.BAD_QUALITY, result.getDescription());
         assertEquals(0, result.getResult());
@@ -146,7 +151,7 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(5, 13, 30, 5, 14, 15, "NORMAL"));
         sessions.add(makeSession(7, 23, 10, 8, 7, 0, "BAD"));
 
-        SleepAnalysisResult result = analytics.countBadQuality(sessions);
+        SleepAnalysisResult result = new BadQualityFunction().apply(sessions);
 
         assertEquals(2, result.getResult());
     }
@@ -156,7 +161,7 @@ class SleepTrackerAppTest {
     void sleeplessNights_sessionInsideNight_returnsZero() {
         sessions.add(makeSession(1, 2, 0, 1, 5, 0, "GOOD"));
 
-        SleepAnalysisResult result = analytics.countSleeplessNights(sessions);
+        SleepAnalysisResult result = new SleeplessNightsFunction().apply(sessions);
 
         assertEquals(SleepAnalysisResult.SLEEPLESS_NIGHTS, result.getDescription());
         assertEquals(0, result.getResult());
@@ -167,7 +172,7 @@ class SleepTrackerAppTest {
     void sleeplessNights_sessionEndingAtSix_returnsZero() {
         sessions.add(makeSession(1, 1, 0, 1, 6, 0, "GOOD"));
 
-        SleepAnalysisResult result = analytics.countSleeplessNights(sessions);
+        SleepAnalysisResult result = new SleeplessNightsFunction().apply(sessions);
 
         assertEquals(0, result.getResult());
     }
@@ -177,7 +182,7 @@ class SleepTrackerAppTest {
     void sleeplessNights_sessionAfterNight_returnsOne() {
         sessions.add(makeSession(1, 7, 0, 1, 11, 0, "NORMAL"));
 
-        SleepAnalysisResult result = analytics.countSleeplessNights(sessions);
+        SleepAnalysisResult result = new SleeplessNightsFunction().apply(sessions);
 
         assertEquals(1, result.getResult());
     }
@@ -188,27 +193,28 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(1, 2, 0, 1, 5, 0, "GOOD"));
         sessions.add(makeSession(2, 1, 0, 2, 4, 30, "GOOD"));
 
-        SleepAnalysisResult result = analytics.countSleeplessNights(sessions);
+        SleepAnalysisResult result = new SleeplessNightsFunction().apply(sessions);
 
         assertEquals(0, result.getResult());
     }
 
-    // Тест: две сессии с разрывом в 4 дня — бессонными считаются ночи без покрытия, результат 4
+    // Тест: две сессии с разрывом — первая после 12:00, ночь startDate исключается. Результат 3
     @Test
     void sleeplessNights_gapInDays_returnsCorrectCount() {
         sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
         sessions.add(makeSession(5, 23, 0, 6, 7, 0, "GOOD"));
 
-        SleepAnalysisResult result = analytics.countSleeplessNights(sessions);
+        SleepAnalysisResult result = new SleeplessNightsFunction().apply(sessions);
 
-        assertEquals(4, result.getResult());
+        assertEquals(3, result.getResult());
     }
 
-    // Тест: пустой список сессий — исключение
+    // Тест: пустой список сессий — результат 0
     @Test
-    void sleeplessNights_emptyList_throwsException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> analytics.countSleeplessNights(sessions));
+    void sleeplessNights_emptyList_returnsZero() {
+        SleepAnalysisResult result = new SleeplessNightsFunction().apply(sessions);
+
+        assertEquals(0, result.getResult());
     }
 
     // Тест: ночная сессия 23:30-09:30 — сова (засыпание после 23:00, пробуждение после 09:00)
@@ -216,7 +222,7 @@ class SleepTrackerAppTest {
     void determineChronotype_owl_returns() {
         sessions.add(makeSession(1, 23, 30, 2, 9, 30, "GOOD"));
 
-        SleepAnalysisResult result = analytics.determineChronotype(sessions);
+        SleepAnalysisResult result = new ChronotypeFunction().apply(sessions);
 
         assertEquals(SleepAnalysisResult.CHRONOTYPE, result.getDescription());
         assertEquals("Сова", result.getResult());
@@ -227,7 +233,7 @@ class SleepTrackerAppTest {
     void determineChronotype_lark_returns() {
         sessions.add(makeSession(1, 21, 0, 2, 6, 30, "GOOD"));
 
-        SleepAnalysisResult result = analytics.determineChronotype(sessions);
+        SleepAnalysisResult result = new ChronotypeFunction().apply(sessions);
 
         assertEquals("Жаворонок", result.getResult());
     }
@@ -237,7 +243,19 @@ class SleepTrackerAppTest {
     void determineChronotype_pigeon_returns() {
         sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
 
-        SleepAnalysisResult result = analytics.determineChronotype(sessions);
+        SleepAnalysisResult result = new ChronotypeFunction().apply(sessions);
+
+        assertEquals("Голубь", result.getResult());
+    }
+
+    // Тест: две сессии на одну ночь — считается как один голос (по самой ранней).
+        @Test
+    void determineChronotype_twoSessionsSameNight_oneVote() {
+        sessions.add(makeSession(1, 23, 30, 2, 2, 0, "GOOD"));   // голубь (23:30-02:00)
+        sessions.add(makeSession(2, 4, 0, 2, 6, 30, "GOOD"));    // жаворонок (04:00-06:30) — та же ночь Oct 2
+        sessions.add(makeSession(3, 21, 0, 4, 6, 30, "GOOD"));   // жаворонок — другая ночь Oct 4
+
+        SleepAnalysisResult result = new ChronotypeFunction().apply(sessions);
 
         assertEquals("Голубь", result.getResult());
     }
@@ -247,7 +265,7 @@ class SleepTrackerAppTest {
     void determineChronotype_daySessionIgnored_returnsNoData() {
         sessions.add(makeSession(1, 14, 0, 1, 15, 0, "NORMAL"));
 
-        SleepAnalysisResult result = analytics.determineChronotype(sessions);
+        SleepAnalysisResult result = new ChronotypeFunction().apply(sessions);
 
         assertEquals(SleepAnalysisResult.NO_DATA, result.getResult());
     }
@@ -258,7 +276,7 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(1, 23, 30, 2, 9, 30, "GOOD"));   // сова
         sessions.add(makeSession(3, 21, 0, 4, 6, 30, "GOOD"));     // жаворонок
 
-        SleepAnalysisResult result = analytics.determineChronotype(sessions);
+        SleepAnalysisResult result = new ChronotypeFunction().apply(sessions);
 
         assertEquals("Голубь", result.getResult());
     }
@@ -270,7 +288,7 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(3, 23, 45, 4, 9, 15, "GOOD"));   // сова
         sessions.add(makeSession(5, 21, 0, 6, 6, 30, "GOOD"));    // жаворонок
 
-        SleepAnalysisResult result = analytics.determineChronotype(sessions);
+        SleepAnalysisResult result = new ChronotypeFunction().apply(sessions);
 
         assertEquals("Сова", result.getResult());
     }
@@ -278,7 +296,7 @@ class SleepTrackerAppTest {
     // Тест: пустой список — недостаточно данных
     @Test
     void determineChronotype_emptyList_returnsNoData() {
-        SleepAnalysisResult result = analytics.determineChronotype(sessions);
+        SleepAnalysisResult result = new ChronotypeFunction().apply(sessions);
 
         assertEquals(SleepAnalysisResult.NO_DATA, result.getResult());
     }
@@ -289,12 +307,13 @@ class SleepTrackerAppTest {
         sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
 
         List<SleepAnalysisResult> results = List.of(
-                analytics.minDuration(sessions),
-                analytics.maxDuration(sessions),
-                analytics.avgDuration(sessions),
-                analytics.countBadQuality(sessions),
-                analytics.countSleeplessNights(sessions),
-                analytics.determineChronotype(sessions)
+                new TotalSessionsFunction().apply(sessions),
+                new MinDurationFunction().apply(sessions),
+                new MaxDurationFunction().apply(sessions),
+                new AverageDurationFunction().apply(sessions),
+                new BadQualityFunction().apply(sessions),
+                new SleeplessNightsFunction().apply(sessions),
+                new ChronotypeFunction().apply(sessions)
         );
 
         results.forEach(r ->
