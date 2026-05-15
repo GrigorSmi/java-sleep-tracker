@@ -103,6 +103,29 @@ class SleepTrackerAppTest {
         assertEquals(270.0, (Double) result.getResult(), 1e-9);
     }
 
+    // Тест: одна сессия — общее количество равно 1
+    @Test
+    void countAllSessions_singleSession_returnsOne() {
+        sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
+
+        SleepAnalysisResult result = analytics.countAllSessions(sessions);
+
+        assertEquals(SleepAnalysisResult.ALL_SESSIONS, result.getDescription());
+        assertEquals(1, result.getResult());
+    }
+
+    // Тест: три сессии — общее количество равно 3
+    @Test
+    void countAllSessions_multipleSessions_returnsCorrectCount() {
+        sessions.add(makeSession(1, 23, 0, 2, 7, 0, "GOOD"));
+        sessions.add(makeSession(3, 14, 0, 3, 15, 0, "NORMAL"));
+        sessions.add(makeSession(5, 0, 0, 5, 6, 0, "GOOD"));
+
+        SleepAnalysisResult result = analytics.countAllSessions(sessions);
+
+        assertEquals(3, result.getResult());
+    }
+
     // Тест: нет сессий с качеством BAD — результат 0
     @Test
     void countBadQuality_noBadSessions_returnsZero() {

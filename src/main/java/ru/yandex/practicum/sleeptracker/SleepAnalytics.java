@@ -40,6 +40,11 @@ public class SleepAnalytics {
         return new SleepAnalysisResult(SleepAnalysisResult.AVG_DURATION, avg);
     }
 
+    // Подсчитывает общее количество сессий сна
+    public SleepAnalysisResult countAllSessions(ArrayList<OneSleepSession> sessions) {
+        return new SleepAnalysisResult(SleepAnalysisResult.ALL_SESSIONS, sessions.size());
+    }
+
     // Подсчитывает количество сессий с плохим качеством сна
     public SleepAnalysisResult countBadQuality(ArrayList<OneSleepSession> sessions) {
         int count = (int) sessions.stream()

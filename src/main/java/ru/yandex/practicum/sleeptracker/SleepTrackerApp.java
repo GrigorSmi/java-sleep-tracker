@@ -14,6 +14,7 @@ public class SleepTrackerApp {
     private final SleepAnalytics analytics = new SleepAnalytics();
 
     private final List<Function<ArrayList<OneSleepSession>, SleepAnalysisResult>> functions = List.of(
+            analytics::countAllSessions,
             analytics::minDuration,
             analytics::maxDuration,
             analytics::avgDuration,
@@ -23,9 +24,14 @@ public class SleepTrackerApp {
     );
 
     public static void main(String[] args) {
+        if (args.length == 0) {
+            System.err.println("Не указан путь к файлу с данными");
+            return;
+        }
+
         try {
             ArrayList<OneSleepSession> sleepSessions = Files.lines(
-                            Paths.get("sleep_log.txt"),
+                            Paths.get(args[0]),
                             StandardCharsets.UTF_8
                     )
                     .filter(line -> !line.trim().isEmpty())
@@ -39,7 +45,7 @@ public class SleepTrackerApp {
         } catch (IOException e) {
             System.err.println("Ошибка при чтении файла: " + e.getMessage());
             System.err.println("Текущий рабочий каталог: " + System.getProperty("user.dir"));
-            System.err.println("Файл существует: " + Files.exists(Paths.get("sleep_log.txt")));
+            System.err.println("Файл существует: " + Files.exists(Paths.get(args[0])));
             e.printStackTrace();
         }
     }
